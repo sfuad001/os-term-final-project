@@ -15,9 +15,10 @@ int main(int argc, char ** argv){
     unsigned int n = 1; //n-bit predictor ( 1 or 2)
     unsigned int addressBits = 8; //how many bits of address is used (up to 12)
     bool debug = false;
-    unsigned long int s = 0;
+    unsigned long int s = 1;
+    
     string fileName = "";
-    while ((opt = getopt(argc,argv,"i:m:n:a:d")) != EOF){
+    while ((opt = getopt(argc,argv,"i:m:n:a:d:s")) != EOF){
         switch(opt){
             case 'i': fileName.assign(optarg); break;
             case 'm': m = atoi(optarg); break;  // Global history size
@@ -40,7 +41,7 @@ int main(int argc, char ** argv){
     TraceFile trace(fileName);
 
     // Initialize Predictor
-    
+    printf("WHAT?\n");
     Predictor pred(m,n, addressBits, debug,s);
     string pc = "";
     string opName = "";

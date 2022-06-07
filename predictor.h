@@ -14,11 +14,17 @@ class Predictor{
         int total;
         bool debug;
         unsigned long int stride;
+        unsigned long int strideOld;
+        double a;
+        double c;
+        //unsigned long int strideOld;
         unsigned long int** LCT;
         unsigned long int** LVPT;
         unsigned long int LCTrows;
         unsigned long int LCTcolumns;
         int n;
+        //double a;
+       // double c;
 	unsigned long int hexToInt(string);
         unsigned long int truncateAddress (unsigned long int);
         void updateGlobalHistory(bool); //update the history
@@ -30,6 +36,8 @@ class Predictor{
         void lastValueWithLCT(unsigned long int , unsigned long int );
         void strideConstantNoLCT(unsigned long int , unsigned long int );
         void strideConstantWithLCT(unsigned long int , unsigned long int );
+        void strideLearnNoLCT(unsigned long int , unsigned long int );
+        void strideLearnWithLCT(unsigned long int , unsigned long int );
 
         void printStats();
 };
