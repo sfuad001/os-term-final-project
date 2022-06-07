@@ -17,6 +17,9 @@ Predictor::Predictor(unsigned int m, unsigned int n, unsigned int addrLength, bo
     for(unsigned long int i=0;i<LCTrows;i++){
         LCT[i]=new unsigned long int[LCTcolumns];
         LVPT[i]=new unsigned long int[LCTcolumns];
+        for (unsigned long int j = 0; j < LCTrows; j++) {
+            LCT[i][j] = 0;
+        }
     }
 
     printf("BHT: %u-bit\n", n);
@@ -51,6 +54,8 @@ string Predictor::makePrediction(string pc, string mem, string expectedLV){
     }
     else if(n==1){
         lastValueWithLCT(pcAddress, LoadValue);
+    } else if (n == 5) { // pc+mem address
+        pcWithMemAddress(pc, mem, LoadValue);
     }
 
 
@@ -98,6 +103,59 @@ void Predictor::lastValueWithLCT(unsigned long int pcAddress, unsigned long int 
 }
 
 
+void Predictor::pcWithMemAddress(string pc, string mem, unsigned long int LoadValue) {
+    pc.erase(0, pc.length() - (this->addrBits));
+    mem.erase(0, mem.length() - (this->addrBits));
+    string index = pc + mem;
+    unsigned long int indexAddress = truncateAddress(hexToInt(index));
+
+    if (this->historyBits == 1) {
+        if (LCT[indexAddress][0] == 2 || LCT[indexAddress][0] == 3) {
+            this->total++;
+        }
+        if (LVPT[indexAddress][0] != LoadValue) {
+            LVPT[indexAddress][0] = LoadValue;
+            // update historybits
+            if (LCT[indexAddress][0] == 0) {
+                LCT[indexAddress][0] = 0;
+            } else if (LCT[indexAddress][0] == 1) {
+                LCT[indexAddress][0] = 0;
+            } else if (LCT[indexAddress][0] == 2) {
+                LCT[indexAddress][0] = 1;
+            } else { // case for 3 or others
+                LCT[indexAddress][0] = 2;
+            }
+        } else {
+            if (LCT[indexAddress][0] == 2 || LCT[indexAddress][0] == 3) {
+                this->correct++;
+            }
+            // update historybits
+            if (LCT[indexAddress][0] == 0) {
+                LCT[indexAddress][0] = 1;
+            } else if (LCT[indexAddress][0] == 1) {
+                LCT[indexAddress][0] = 2;
+            } else if (LCT[indexAddress][0] == 2) {
+                LCT[indexAddress][0] = 3;
+            } else { // case for 3 or others
+                LCT[indexAddress][0] = 3;
+            }
+        }
+    } else { // default case: this->historyBits == 0
+        if (LCT[indexAddress][0] == 1) {
+            this->total++;
+        }
+
+        if (LVPT[indexAddress][0]!=LoadValue){
+            LVPT[indexAddress][0] = LoadValue;
+            LCT[indexAddress][0] = 0;
+        } else {
+            if (LCT[indexAddress][0] == 1) {
+                this->correct++;
+            }
+            LCT[indexAddress][0]=1;
+        }
+    }
+}
 /*
 bool Predictor::makePrediction(string input, bool expected){
     // Convert Hex address to integer address

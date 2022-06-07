@@ -27,6 +27,7 @@ class Predictor{
         string makePrediction(string, string, string);
         void lastValue(unsigned long int , unsigned long int );
         void lastValueWithLCT(unsigned long int , unsigned long int );
+        void pcWithMemAddress(string, string, unsigned long int);
 
         void printStats();
 };
