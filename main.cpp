@@ -15,6 +15,7 @@ int main(int argc, char ** argv){
     unsigned int n = 1; //n-bit predictor ( 1 or 2)
     unsigned int addressBits = 8; //how many bits of address is used (up to 12)
     bool debug = false;
+    unsigned long int s = 0;
     string fileName = "";
     while ((opt = getopt(argc,argv,"i:m:n:a:d")) != EOF){
         switch(opt){
@@ -23,6 +24,7 @@ int main(int argc, char ** argv){
             case 'n': n = atoi(optarg); break; // n-bit predictor
             case 'a': addressBits = atoi(optarg); break; // how many LSB of address is used for indexing
             case 'd': debug = true; break;
+            case 's': s = atoi(optarg); break;
 	    case '?': printf("usage is \n -i : fileName \n -m : history length\n -n : n-bit\n -a : address length\n -d : debug\n");
             default: exit(1);
         }
@@ -39,7 +41,7 @@ int main(int argc, char ** argv){
 
     // Initialize Predictor
     
-    Predictor pred(m,n, addressBits, debug);
+    Predictor pred(m,n, addressBits, debug,s);
     string pc = "";
     string opName = "";
     string memAddress = "";

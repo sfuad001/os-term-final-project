@@ -13,6 +13,7 @@ class Predictor{
         int correct;
         int total;
         bool debug;
+        unsigned long int stride;
         unsigned long int** LCT;
         unsigned long int** LVPT;
         unsigned long int LCTrows;
@@ -23,10 +24,12 @@ class Predictor{
         void updateGlobalHistory(bool); //update the history
 
     public:
-        Predictor(unsigned int, unsigned int, unsigned int, bool);
+        Predictor(unsigned int, unsigned int, unsigned int, bool, unsigned long int );
         string makePrediction(string, string, string);
         void lastValue(unsigned long int , unsigned long int );
         void lastValueWithLCT(unsigned long int , unsigned long int );
+        void strideConstantNoLCT(unsigned long int , unsigned long int );
+        void strideConstantWithLCT(unsigned long int , unsigned long int );
 
         void printStats();
 };

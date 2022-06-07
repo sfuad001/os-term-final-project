@@ -2,7 +2,7 @@
 #include <sstream>
 #include <iomanip>
 #include <cmath>
-Predictor::Predictor(unsigned int m, unsigned int n, unsigned int addrLength, bool debug){
+Predictor::Predictor(unsigned int m, unsigned int n, unsigned int addrLength, bool debug, unsigned long int s){
     this->historyBits = m; // Size of global history
     this->globalHistory = 0; 
     this->addrBits = addrLength;
@@ -10,6 +10,7 @@ Predictor::Predictor(unsigned int m, unsigned int n, unsigned int addrLength, bo
     this->correct = 0;
     this->total = 0;
     this->n=n;
+    this->stride=s;
     LCTrows=pow(2,addrLength);
     LCTcolumns=pow(2,m);
     this->LCT = new unsigned long int*[LCTrows];
@@ -51,6 +52,12 @@ string Predictor::makePrediction(string pc, string mem, string expectedLV){
     }
     else if(n==1){
         lastValueWithLCT(pcAddress, LoadValue);
+    }
+    else if(n==3){
+        strideConstantNoLCT(pcAddress, LoadValue);
+    }
+    else if(n==4){
+        strideConstantWithLCT(pcAddress, LoadValue);
     }
 
 
@@ -97,6 +104,37 @@ void Predictor::lastValueWithLCT(unsigned long int pcAddress, unsigned long int 
     
 }
 
+void Predictor::strideConstantNoLCT(unsigned long int pcAddress, unsigned long int LoadValue)
+{
+    unsigned long int predicted = LVPT[pcAddress][historyBits] + this->stride;
+    if(predicted!=LoadValue){
+        this->stride = LoadValue - LVPT[pcAddress][historyBits];
+    }
+    else{
+        this->correct+=1;
+    }
+    LVPT[pcAddress][historyBits]=LoadValue;
+    this->total+=1;
+}
+
+
+void Predictor::strideConstantWithLCT(unsigned long int pcAddress, unsigned long int LoadValue)
+{
+    if(LCT[pcAddress][historyBits] == 1)
+        this->total+=1;
+
+    unsigned long int predicted = LVPT[pcAddress][historyBits] + this->stride;
+    if(predicted!=LoadValue){
+        this->stride = LoadValue - LVPT[pcAddress][historyBits];
+    }
+    else{
+        if(LCT[pcAddress][historyBits] == 1)
+            this->correct+=1;
+        LCT[pcAddress][historyBits]=1;
+    }
+
+    LVPT[pcAddress][historyBits]=LoadValue;   
+}
 
 /*
 bool Predictor::makePrediction(string input, bool expected){
