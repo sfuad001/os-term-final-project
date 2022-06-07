@@ -38,25 +38,22 @@ bool TraceFile::getNextBranch(string &addr, bool& result){
     }
 }
 */
-bool TraceFile::getNextBranch(string &addr, bool& result){
+bool TraceFile::getNextBranch(string &pc, string &opName, string &memAddress, string &expectedLV){
     //if closed return 0
     if(!this->inputStream.is_open()){
         return 0;
     }   
-    string input1, input2;
+    string input1, input2, input3, input4;
     //check if can get input
-    if(this->inputStream >> input1 >> input2){
-        addr = input1; 
-        if(input2 == "T"){
-            result = 1;
+    if(this->inputStream >> input1 >> input2 >> input3 >> input4){
+        input1.pop_back();
+        pc = input1; 
+        if(input2 == "R"){
+            opName = "LOAD";
         }
-        else if(input2 == "N"){
-            result = 0;
-        }
-        else{
-            printf("ERROR unexpected value: %s\n",input2.c_str());
-            exit(1);
-        }
+        input3.pop_back();
+        memAddress = input3;
+        expectedLV = input4;
         return 1;
     }
     //return 0

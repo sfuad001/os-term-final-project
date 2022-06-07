@@ -14,7 +14,7 @@ class TraceFile{
 
     public:
         TraceFile(string fileName);
-        bool getNextBranch(string &, bool &);
+        bool getNextBranch(string &, string &, string &, string &);
 };
 
 #endif
