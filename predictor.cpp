@@ -12,11 +12,11 @@ Predictor::Predictor(unsigned int m, unsigned int n, unsigned int addrLength, bo
     this->n=n;
     LCTrows=pow(2,addrLength);
     LCTcolumns=pow(2,m);
-    this->LCT = new unsigned int*[LCTrows];
-    this->LVPT = new unsigned int*[LCTrows];
-    for(unsigned int i=0;i<LCTrows;i++){
-        LCT[i]=new unsigned int[LCTcolumns];
-        LVPT[i]=new unsigned int[LCTcolumns];
+    this->LCT = new unsigned long int*[LCTrows];
+    this->LVPT = new unsigned long int*[LCTrows];
+    for(unsigned long int i=0;i<LCTrows;i++){
+        LCT[i]=new unsigned long int[LCTcolumns];
+        LVPT[i]=new unsigned long int[LCTcolumns];
     }
 
     printf("BHT: %u-bit\n", n);
@@ -37,21 +37,66 @@ void Predictor::updateGlobalHistory(bool expected){
 
 string Predictor::makePrediction(string pc, string mem, string expectedLV){
     // Convert Hex address to integer address
-    unsigned int pcAddress = truncateAddress(hexToInt(pc));
-    unsigned int memAddress = truncateAddress(hexToInt(mem));
-    unsigned int LoadValue = hexToInt(expectedLV);
+    pc.erase(0,2);
+    unsigned long int pcAddress = truncateAddress(hexToInt(pc));
+    unsigned long int memAddress = truncateAddress(hexToInt(mem));
+    unsigned long int LoadValue = hexToInt(expectedLV);
 
-    printf("LoadValue: %u\n",LoadValue);
+    //printf("LoadValue: %u\n",LoadValue);
+    //printf("PC string: %s, PC address: %lu, LoadValue: %lu\n", pc.c_str(), pcAddress, LoadValue);
 
-    if(n==1){
 
+    if(n==0){      
+        lastValue(pcAddress, LoadValue);
     }
+    else if(n==1){
+        lastValueWithLCT(pcAddress, LoadValue);
+    }
+
+
+
    // Currently, this simple branch predictor simulator simply takes 
     // the previous observed branch direction as the next prediction.
     // Predict branch based on last observed branch
     //bool predicted = globalHistory & 1; 
     return expectedLV;
 }
+
+void Predictor::lastValue(unsigned long int pcAddress, unsigned long int LoadValue)
+{
+
+    if(LVPT[pcAddress][historyBits]!=LoadValue){
+        LVPT[pcAddress][historyBits]=LoadValue;
+
+        LCT[pcAddress][historyBits]=0;
+    }
+    else{
+        this->correct+=1;
+        LCT[pcAddress][historyBits]=1;
+    }
+    this->total+=1;
+}
+
+void Predictor::lastValueWithLCT(unsigned long int pcAddress, unsigned long int LoadValue)
+{
+    if(LCT[pcAddress][historyBits] == 1)
+        this->total+=1;
+
+
+    if(LVPT[pcAddress][historyBits]!=LoadValue){
+        LVPT[pcAddress][historyBits]=LoadValue;
+        LCT[pcAddress][historyBits] = 0;
+    }
+    else{
+        if(LCT[pcAddress][historyBits] == 1)
+            this->correct+=1;
+
+        LCT[pcAddress][historyBits]=1;
+    }
+
+    
+}
+
 
 /*
 bool Predictor::makePrediction(string input, bool expected){
@@ -154,9 +199,9 @@ void Predictor::printStats(){
 /*
  * Convert Hex string from trace file to integer address
  */
-unsigned int Predictor::hexToInt(string input){
+unsigned long int Predictor::hexToInt(string input){
     istringstream converter(input);
-    unsigned int result;
+    unsigned long int result;
     converter >> std::hex >> result; 
     return result;
 }
@@ -164,9 +209,9 @@ unsigned int Predictor::hexToInt(string input){
 /*
  * Truncate Address to specified number of address bits
  */
-unsigned int Predictor::truncateAddress(unsigned int input){
-    unsigned int mask = (1 << this->addrBits) - 1;
-    unsigned int result = input & mask;
+unsigned long int Predictor::truncateAddress(unsigned long int input){
+    unsigned long int mask = (1 << this->addrBits) - 1;
+    unsigned long int result = input & mask;
 
     return result;
 }

@@ -13,18 +13,21 @@ class Predictor{
         int correct;
         int total;
         bool debug;
-        unsigned int** LCT;
-        unsigned int** LVPT;
-        unsigned int LCTrows;
-        unsigned int LCTcolumns;
+        unsigned long int** LCT;
+        unsigned long int** LVPT;
+        unsigned long int LCTrows;
+        unsigned long int LCTcolumns;
         int n;
-	unsigned int hexToInt(string);
-        unsigned int truncateAddress (unsigned int);
+	unsigned long int hexToInt(string);
+        unsigned long int truncateAddress (unsigned long int);
         void updateGlobalHistory(bool); //update the history
 
     public:
         Predictor(unsigned int, unsigned int, unsigned int, bool);
         string makePrediction(string, string, string);
+        void lastValue(unsigned long int , unsigned long int );
+        void lastValueWithLCT(unsigned long int , unsigned long int );
+
         void printStats();
 };
 
