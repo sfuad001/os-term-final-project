@@ -13,10 +13,10 @@ class Predictor{
         int correct;
         int total;
         bool debug;
-        unsigned int** BHT;
-        unsigned int** BHTEntryCount;
-        unsigned int BHTrows;
-        unsigned int BHTcolumns;
+        unsigned int** LCT;
+        unsigned int** LVPT;
+        unsigned int LCTrows;
+        unsigned int LCTcolumns;
         int n;
 	unsigned int hexToInt(string);
         unsigned int truncateAddress (unsigned int);
@@ -24,7 +24,7 @@ class Predictor{
 
     public:
         Predictor(unsigned int, unsigned int, unsigned int, bool);
-        bool makePrediction(string, bool);
+        string makePrediction(string, string, string);
         void printStats();
 };
 

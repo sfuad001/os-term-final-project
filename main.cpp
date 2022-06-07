@@ -27,26 +27,35 @@ int main(int argc, char ** argv){
             default: exit(1);
         }
     }
+
+    /*
     if(fileName.empty()){
             printf("usage is \n -i : fileName \n -m : history length\n -n : n-bit\n -a : address length\n -d: debug\n");
 	    exit(1);
     }
-
+   */
     // Initialize Trace File
-    TraceFile trace(fileName);
+    //TraceFile trace(fileName);
 
     // Initialize Predictor
     Predictor pred(m,n, addressBits, debug);
-    string address = "";
-    bool expected, predicted;
+    string pc = "7f6fd2b38e1f";
+    string opName = "";
+    string memAddress = "7f6fd2b64e68";
+    string expectedLV, predictedLV;
+    expectedLV = "000000000002de68";
+    predictedLV = pred.makePrediction(pc, opName, memAddress, expectedLV);
+    printf("PC address: 0x%s, predicted: 0x%s, expected: 0x%s\n", pc.c_str(), predictedLV.c_str(), expectedLV.c_str());
 
     // Execute trace through Predictor
-    while(trace.getNextBranch(address,expected)){
-        predicted = pred.makePrediction(address,expected);
+
+    /*
+    while(trace.getNextBranch(pc, memAddress, expectedLV)){
+        predicted = pred.makePrediction(pc, memAddress, expectedLV);
     	if(debug){
-		printf("Branch address: 0x%s, predicted: %d, expected: %d\n", address.c_str(), predicted, expected);
+		printf("PC address: 0x%s, predicted: %lu, expected: %lu\n", pc.c_str(), predictedLV, expectedLV);
     	}
-    }
+    }*/
 
     // Print results
     pred.printStats();

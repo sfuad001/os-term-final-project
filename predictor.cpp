@@ -10,13 +10,13 @@ Predictor::Predictor(unsigned int m, unsigned int n, unsigned int addrLength, bo
     this->correct = 0;
     this->total = 0;
     this->n=n;
-    BHTrows=pow(2,addrLength);
-    BHTcolumns=pow(2,m);
-    this->BHT = new unsigned int*[BHTrows];
-    this->BHTEntryCount=new unsigned int*[BHTrows];
-    for(unsigned int i=0;i<BHTrows;i++){
-        BHT[i]=new unsigned int[BHTcolumns];
-        BHTEntryCount[i]=new unsigned int[BHTcolumns];
+    LCTrows=pow(2,addrLength);
+    LCTcolumns=pow(2,m);
+    this->LCT = new unsigned int*[LCTrows];
+    this->LVPT = new unsigned int*[LCTrows];
+    for(unsigned int i=0;i<LCTrows;i++){
+        LCT[i]=new unsigned int[LCTcolumns];
+        LVPT[i]=new unsigned int[LCTcolumns];
     }
 
     printf("BHT: %u-bit\n", n);
@@ -35,6 +35,25 @@ void Predictor::updateGlobalHistory(bool expected){
     globalHistory = globalHistory & mask; 
 }
 
+string Predictor::makePrediction(string pc, string mem, string expectedLV){
+    // Convert Hex address to integer address
+    unsigned int pcAddress = truncateAddress(hexToInt(pc));
+    unsigned int memAddress = truncateAddress(hexToInt(mem));
+    unsigned int LoadValue = hexToInt(expectedLV);
+
+    printf("LoadValue: %u\n",LoadValue);
+
+    if(n==1){
+
+    }
+   // Currently, this simple branch predictor simulator simply takes 
+    // the previous observed branch direction as the next prediction.
+    // Predict branch based on last observed branch
+    //bool predicted = globalHistory & 1; 
+    return expectedLV;
+}
+
+/*
 bool Predictor::makePrediction(string input, bool expected){
     // Convert Hex address to integer address
     unsigned int address = truncateAddress(hexToInt(input));
@@ -109,7 +128,7 @@ bool Predictor::makePrediction(string input, bool expected){
 
     return predicted;
 }
-
+*/
 /*
  * Print out branch predictor statistics
  */
@@ -125,24 +144,6 @@ void Predictor::printStats(){
     printf("correct: %d\n", this->correct);
     printf("total: %d\n",this->total);
 
-    long unsigned int entries=0;
-    for(unsigned int i=0;i<BHTrows;i++){
-        for(unsigned int j=0;j<BHTcolumns;j++){
-            if(BHTEntryCount[i][j]>0){
-                //printf("Entry: %d\n",BHTEntryCount[i][j]);
-                entries++;
-            }
-        }
-    }
-    // Update the following line to print out the number of BHT entires used.
-    printf("BHT used %lu entries\n",entries);  
-
-    for (unsigned int i=0; i<BHTrows; i++){
-        delete[] BHT[i];
-        delete[] BHTEntryCount[i];
-    }
-    delete[] BHT;
-    delete[] BHTEntryCount;
 }
 
 /*
