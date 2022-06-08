@@ -104,10 +104,12 @@ void Predictor::lastValueWithLCT(unsigned long int pcAddress, unsigned long int 
 
 
 void Predictor::pcWithMemAddress(string pc, string mem, unsigned long int LoadValue) {
-    pc.erase(0, pc.length() - (this->addrBits));
-    mem.erase(0, mem.length() - (this->addrBits));
+    pc.erase(0, pc.length() - (this->addrBits/2));
+    mem.erase(0, mem.length() - (this->addrBits/2));
     string index = pc + mem;
+    //cout<< index <<endl;
     unsigned long int indexAddress = truncateAddress(hexToInt(index));
+    // cout << indexAddress << endl;
 
     if (this->historyBits == 1) {
         if (LCT[indexAddress][0] == 2 || LCT[indexAddress][0] == 3) {
@@ -116,14 +118,14 @@ void Predictor::pcWithMemAddress(string pc, string mem, unsigned long int LoadVa
         if (LVPT[indexAddress][0] != LoadValue) {
             LVPT[indexAddress][0] = LoadValue;
             // update historybits
-            if (LCT[indexAddress][0] == 0) {
-                LCT[indexAddress][0] = 0;
-            } else if (LCT[indexAddress][0] == 1) {
+            if (LCT[indexAddress][0] == 1) {
                 LCT[indexAddress][0] = 0;
             } else if (LCT[indexAddress][0] == 2) {
-                LCT[indexAddress][0] = 1;
-            } else { // case for 3 or others
+                LCT[indexAddress][0] = 0;
+            } else if (LCT[indexAddress][0] == 3) { // case for 3 
                 LCT[indexAddress][0] = 2;
+            } else {
+                LCT[indexAddress][0] = 0;
             }
         } else {
             if (LCT[indexAddress][0] == 2 || LCT[indexAddress][0] == 3) {
@@ -133,7 +135,7 @@ void Predictor::pcWithMemAddress(string pc, string mem, unsigned long int LoadVa
             if (LCT[indexAddress][0] == 0) {
                 LCT[indexAddress][0] = 1;
             } else if (LCT[indexAddress][0] == 1) {
-                LCT[indexAddress][0] = 2;
+                LCT[indexAddress][0] = 3;
             } else if (LCT[indexAddress][0] == 2) {
                 LCT[indexAddress][0] = 3;
             } else { // case for 3 or others
