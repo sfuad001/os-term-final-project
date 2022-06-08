@@ -15,6 +15,8 @@ class Predictor{
         bool debug;
         unsigned long int** LCT;
         unsigned long int** LVPT;
+        unsigned long int** LRUCount;
+
         unsigned long int LCTrows;
         unsigned long int LCTcolumns;
         int n;
@@ -28,7 +30,8 @@ class Predictor{
         void lastValue(unsigned long int , unsigned long int );
         void lastValueWithLCT(unsigned long int , unsigned long int );
         void pcWithMemAddress(string, string, unsigned long int);
-
+        void fcmWithMaxOccurence(unsigned long int , unsigned long int );
+        void updateLCT(unsigned long int , bool );
         void printStats();
 };
 

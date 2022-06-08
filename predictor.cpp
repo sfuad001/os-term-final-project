@@ -11,14 +11,20 @@ Predictor::Predictor(unsigned int m, unsigned int n, unsigned int addrLength, bo
     this->total = 0;
     this->n=n;
     LCTrows=pow(2,addrLength);
-    LCTcolumns=pow(2,m);
+    LCTcolumns= m;
     this->LCT = new unsigned long int*[LCTrows];
     this->LVPT = new unsigned long int*[LCTrows];
+    this->LRUCount = new unsigned long int*[LCTrows];
+
     for(unsigned long int i=0;i<LCTrows;i++){
         LCT[i]=new unsigned long int[LCTcolumns];
         LVPT[i]=new unsigned long int[LCTcolumns];
-        for (unsigned long int j = 0; j < LCTrows; j++) {
+        LRUCount[i] = new unsigned long int[LCTcolumns];
+
+        for (unsigned long int j = 0; j < LCTColumns; j++) {
             LCT[i][j] = 0;
+            LVPT[i][j] = 0;
+            LRUCount[i][j] = 0;
         }
     }
 
@@ -100,6 +106,65 @@ void Predictor::lastValueWithLCT(unsigned long int pcAddress, unsigned long int 
     }
 
     
+}
+
+void Predictor::fcmWithMaxOccurence(unsigned long int pcAddress, unsigned long int LoadValue){
+    
+
+    //predict max occur
+    unsigned long int max = LRUCount[pcAddress][0];
+    unsigned long int maxIndex = 0;
+    unsigned long int min = LRUCount[pcAddress][0];
+    unsigned long int minIndex = 0;
+
+    for(unsigned long int j=1;j< m;j++){
+        if(LRUCount[pcAddress][j] > max){
+            max = LRUCount[pcAddress][j];
+            maxIndex = j;
+        }
+        if(LRUCount[pcAddress][j] < min){
+            min = LRUCount[pcAddress][j];
+            minIndex = j;
+        }
+    }
+
+
+
+    long unsigned int predictedValue = LVPT[pcAddress][maxIndex];
+    bool expected = false;
+    if(predictedValue == LoadValue) expected = true;
+
+    if(LCT[pcAddress][0] == 2 || LCT[pcAddress][1] == 3) {
+        this->total++;
+        if(expected){
+            this->correct++;
+        }
+    }
+
+    updateLCT(pcAddress, expected);
+    bool found = false;
+    for(unsigned long int j=1;j< m;j++){
+        if(LVPT[pcAddress][j] == LoadValue){
+            LRUCount[pcAddress][j]++;
+            found = true;
+            break;
+        }
+    }
+
+    if(!found){
+        LVPT[pcAddress][minIndex] = LoadValue;
+        LRUCount[pcAddress][minIndex] = 1;
+    }
+
+}
+
+void Predictor::updateLCT(unsigned long int address, bool expected){
+    if((this->LCT[address][0]==0) && (expected==true)) this->LCT[address][0]=1;
+    else if((this->LCT[address][0]==3) && (expected==false)) this->LCT[address][0]=2;
+    else if((this->LCT[address][0]==1) || (this->LCT[address][0]==2)){
+        if(expected==false) this->LCT[address][0]=0;
+        else this->LCT[address][0]=3;
+    }    
 }
 
 
