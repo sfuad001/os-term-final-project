@@ -17,6 +17,7 @@ class Predictor{
         unsigned long int strideOld;
         double a;
         double c;
+        int choice;
         //unsigned long int strideOld;
         unsigned long int** LCT;
         unsigned long int** LVPT;
@@ -30,7 +31,7 @@ class Predictor{
         void updateGlobalHistory(bool); //update the history
 
     public:
-        Predictor(unsigned int, unsigned int, unsigned int, bool, unsigned long int );
+        Predictor(unsigned int, unsigned int, unsigned int, bool, unsigned long int, int );
         string makePrediction(string, string, string);
         void lastValue(unsigned long int , unsigned long int );
         void lastValueWithLCT(unsigned long int , unsigned long int );

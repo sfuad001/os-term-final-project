@@ -2,7 +2,7 @@
 #include <sstream>
 #include <iomanip>
 #include <cmath>
-Predictor::Predictor(unsigned int m, unsigned int n, unsigned int addrLength, bool debug, unsigned long int s){
+Predictor::Predictor(unsigned int m, unsigned int n, unsigned int addrLength, bool debug, unsigned long int s, int p){
     this->historyBits = m; // Size of global history
     this->globalHistory = 0; 
     this->addrBits = addrLength;
@@ -14,6 +14,7 @@ Predictor::Predictor(unsigned int m, unsigned int n, unsigned int addrLength, bo
     this->strideOld=0;
     this->a = 1;
     this->c=0;
+    this-> choice = p;
     LCTrows=pow(2,addrLength);
     LCTcolumns=pow(2,m);
     this->LCT = new unsigned long int*[LCTrows];
@@ -50,23 +51,23 @@ string Predictor::makePrediction(string pc, string mem, string expectedLV){
     //printf("PC string: %s, PC address: %lu, LoadValue: %lu\n", pc.c_str(), pcAddress, LoadValue);
 
 
-    if(n==0){      
+    if(choice==0){      
         lastValue(pcAddress, LoadValue);
     }
-    else if(n==1){
+    else if(choice==1){
         lastValueWithLCT(pcAddress, LoadValue);
     }
-    else if(n==2){
+    else if(choice==2){
         strideConstantNoLCT(pcAddress, LoadValue);
     }
-    else if(n==3){
+    else if(choice==3){
         strideConstantWithLCT(pcAddress, LoadValue);
     }
-    else if(n==4){
+    else if(choice==4){
         //printf("Hello World\n");
         strideLearnNoLCT(pcAddress, LoadValue);
     }
-    else if(n==5){
+    else if(choice==6){
         strideLearnWithLCT(pcAddress, LoadValue);
     }
 
