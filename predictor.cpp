@@ -82,10 +82,10 @@ string Predictor::makePrediction(string pc, string mem, string expectedLV){
     else if (choice == 7) { // pc+mem address
         fcmWithMaxOccurence(pcAddress, LoadValue);
     }
-    else if(choice == 8){
+    /*else if(choice == 8){
         tournamentPredictor(pcAddress, LoadValue);
-    }
-    else if(choice == 9){
+    }*/
+    else if(choice == 8){
         tournamentWithLCTPredictor(pcAddress, LoadValue);
     }
 

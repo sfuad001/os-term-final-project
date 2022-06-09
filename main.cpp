@@ -11,12 +11,12 @@ using namespace std;
 
 int main(int argc, char ** argv){
     int opt;
-    unsigned int m = 6; //Global branch history (up to 12)
+    unsigned int m = 1; //Global branch history (up to 12)
     unsigned int n = 1; //n-bit predictor ( 1 or 2)
     unsigned int addressBits = 8; //how many bits of address is used (up to 12)
     bool debug = false;
     unsigned long int s = 1;
-    int p=0;
+    int p=8;
     
     string fileName = "";
     while ((opt = getopt(argc,argv,"i:m:n:a:d:s:p:")) != EOF){
