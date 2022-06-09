@@ -49,6 +49,7 @@ class Predictor{
         void strideLearnNoLCT(unsigned long int , unsigned long int );
         void strideLearnWithLCT(unsigned long int , unsigned long int );
         void tournamentPredictor(unsigned long int , unsigned long int );
+        void tournamentWithLCTPredictor(unsigned long int, unsigned long int);
         void printStats();
 };
 

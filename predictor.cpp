@@ -75,7 +75,6 @@ string Predictor::makePrediction(string pc, string mem, string expectedLV){
         strideConstantWithLCT(pcAddress, LoadValue);
     }
     else if(choice==4){
-        //printf("Hello World\n");
         strideLearnNoLCT(pcAddress, LoadValue);
     }
     else if(choice==5){
@@ -89,6 +88,9 @@ string Predictor::makePrediction(string pc, string mem, string expectedLV){
     }
     else if(choice == 8){
         tournamentPredictor(pcAddress, LoadValue);
+    }
+    else if(choice == 9){
+        tournamentWithLCTPredictor(pcAddress, LoadValue);
     }
 
    // Currently, this simple branch predictor simulator simply takes 
@@ -464,6 +466,72 @@ void Predictor::tournamentPredictor(unsigned long int pcAddress, unsigned long i
 
 }
 
+void Predictor::tournamentWithLCTPredictor(unsigned long int pcAddress, unsigned long int LoadValue){
+    //predictor 1: LastInstanceWithoutLCT, predictor 2: LinearLCTwithStride
+    //first get predicted value from predictor-1
+
+    unsigned long int predicted2 = LVPT[pcAddress][0];
+
+    unsigned long int strideNew = (unsigned long int) (this->a * this->stride + this->c);
+    unsigned long int predicted1 = LVPT[pcAddress][0] + strideNew;
+    bool predict = true;
+
+    if(predict){
+        if(tournament == 0){
+            strideLearnWithLCT(pcAddress, LoadValue);
+            if(predicted1!=LoadValue)   tournament=1;
+        }
+        else if(tournament == 3){
+            lastValueWithLCT(pcAddress, LoadValue);
+
+            if(predicted1!=LoadValue){
+                strideNew = LoadValue - LVPT[pcAddress][0];
+                if(this->stride != this->strideOld){
+                    this->a = (strideNew - this->stride) / (this->stride - this->strideOld);
+                    this->c = strideNew - a * this->stride;
+                }
+                else{
+                    this->a =1;
+                    this->c =0;
+                }
+                this->strideOld = this->stride;
+                this->stride = strideNew;     
+
+            }
+            
+            if(predicted2!=LoadValue)   tournament=2;
+        }
+        else if(tournament == 1){
+            strideLearnWithLCT(pcAddress, LoadValue);
+
+            if(predicted1!=LoadValue)   tournament=2;
+            else    tournament = 0;
+        }
+        else{
+            lastValueWithLCT(pcAddress, LoadValue);
+
+            if(predicted1!=LoadValue){
+                strideNew = LoadValue - LVPT[pcAddress][0];
+                if(this->stride != this->strideOld){
+                    this->a = (strideNew - this->stride) / (this->stride - this->strideOld);
+                    this->c = strideNew - a * this->stride;
+                }
+                else{
+                    this->a =1;
+                    this->c =0;
+                }
+                this->strideOld = this->stride;
+                this->stride = strideNew;     
+
+            }
+
+            if(predicted2!=LoadValue)   tournament=1;
+            else    tournament=3;
+        } 
+    }
+
+
+}
 /*
  * Print out branch predictor statistics
  */
