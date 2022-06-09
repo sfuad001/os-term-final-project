@@ -35,12 +35,11 @@ Predictor::Predictor(unsigned int m, unsigned int n, unsigned int addrLength, bo
         }
     }
 
-    printf("BHT: %u-bit\n", n);
     printf("Address length: %u\n", this->addrBits);
-    printf("History length: %u\n", this->historyBits);
+    printf("Saturating counter: %u bit(s)\n", this->n);
+    printf("Stride: %u\n", this->stride);
+    printf("Local history instances: %u\n", this->historyBits);
     printf("Debug mode: %u\n", this->debug);
-    //printf("BHT rows: %u\n", BHTrows);
-    //printf("BHT columns: %u\n", BHTcolumns);
 };
 
 
@@ -57,9 +56,6 @@ string Predictor::makePrediction(string pc, string mem, string expectedLV){
     unsigned long int pcAddress = truncateAddress(hexToInt(pc));
     unsigned long int memAddress = truncateAddress(hexToInt(mem));
     unsigned long int LoadValue = hexToInt(expectedLV);
-
-    //printf("LoadValue: %u\n",LoadValue);
-    //printf("PC string: %s, PC address: %lu, LoadValue: %lu\n", pc.c_str(), pcAddress, LoadValue);
 
     this->fileLength++;
     if(choice==0){      
@@ -231,10 +227,7 @@ void Predictor::pcWithMemAddress(string pc, string mem, unsigned long int LoadVa
     pc.erase(0, pc.length() - (this->addrBits/2));
     mem.erase(0, mem.length() - (this->addrBits/2));
     string index = pc + mem;
-    //cout<< index <<endl;
     unsigned long int indexAddress = truncateAddress(hexToInt(index));
-    // cout << indexAddress << endl;
-
 
     if (this->n == 2) {
         if (LCT[indexAddress][0] == 2 || LCT[indexAddress][0] == 3) {
@@ -267,7 +260,7 @@ void Predictor::pcWithMemAddress(string pc, string mem, unsigned long int LoadVa
                 LCT[indexAddress][0] = 3;
             }
         }
-    } else { // default case: this->historyBits == 0
+    } else { // default case
         if (LCT[indexAddress][0] == 1) {
             this->total++;
         }
@@ -541,17 +534,13 @@ void Predictor::printStats(){
         printf("Error, Cannot get rate \n");
     }
     else{
-        printf("Misclassification rate: %.2f%%\n", 100.00 * (1 - (double)(this->correct)/this->total));
+        //printf("Misclassification rate: %.2f%%\n", 100.00 * (1 - (double)(this->correct)/this->total));
         printf("correct: %d\n", this->correct);
         printf("Predicted: %d\n",this->total);
         
         printf("Correct percentage: %.2f%%\n", 100.00 * ((double) this->correct/this->total));
         printf("Predicted percentage: %.2f%%\n", 100.00 * ( (double) this->total/this->fileLength));
-        //printf("Hi\n");
     } 
-    
-
-
 }
 
 /*

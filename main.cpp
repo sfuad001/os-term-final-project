@@ -52,14 +52,8 @@ int main(int argc, char ** argv){
     string predictedLV = "";
     // Execute trace through Predictor
 
-    int i = 0;
     while(trace.getNextBranch(pc, opName, memAddress, expectedLV)){
         predictedLV = pred.makePrediction(pc, memAddress, expectedLV);
-    	//printf("PC address: 0x%s, predicted: %s, memAddress: %s\n", pc.c_str(), predictedLV.c_str(), memAddress.c_str());
-        // if(debug){
-		// printf("Branch address: 0x%s, predicted: %d, expected: %d\n", address.c_str(), predicted, expected);
-    	// }
-        i++;
     }
 
     // Print results
