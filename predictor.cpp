@@ -2,14 +2,21 @@
 #include <sstream>
 #include <iomanip>
 #include <cmath>
-Predictor::Predictor(unsigned int m, unsigned int n, unsigned int addrLength, bool debug){
+Predictor::Predictor(unsigned int m, unsigned int n, unsigned int addrLength, bool debug, unsigned long int s, int p){
     this->historyBits = m; // Size of global history
     this->globalHistory = 0; 
     this->addrBits = addrLength;
     this->debug = debug;
     this->correct = 0;
     this->total = 0;
+    this->fileLength = 0;
     this->n=n;
+    this->stride=s;
+    this->strideOld=0;
+    this->a = 1;
+    this->c=0;
+    this-> choice = p;
+    this->tournament = 3;
     LCTrows=pow(2,addrLength);
     LCTcolumns= m;
     this->LCT = new unsigned long int*[LCTrows];
@@ -21,7 +28,7 @@ Predictor::Predictor(unsigned int m, unsigned int n, unsigned int addrLength, bo
         LVPT[i]=new unsigned long int[LCTcolumns];
         LRUCount[i] = new unsigned long int[LCTcolumns];
 
-        for (unsigned long int j = 0; j < LCTColumns; j++) {
+        for (unsigned long int j = 0; j < LCTcolumns; j++) {
             LCT[i][j] = 0;
             LVPT[i][j] = 0;
             LRUCount[i][j] = 0;
@@ -54,17 +61,35 @@ string Predictor::makePrediction(string pc, string mem, string expectedLV){
     //printf("LoadValue: %u\n",LoadValue);
     //printf("PC string: %s, PC address: %lu, LoadValue: %lu\n", pc.c_str(), pcAddress, LoadValue);
 
-
-    if(n==0){      
+    this->fileLength++;
+    if(choice==0){      
         lastValue(pcAddress, LoadValue);
     }
-    else if(n==1){
+    else if(choice==1){
         lastValueWithLCT(pcAddress, LoadValue);
-    } else if (n == 5) { // pc+mem address
+    } 
+    else if(choice==2){
+        strideConstantNoLCT(pcAddress, LoadValue);
+    }
+    else if(choice==3){
+        strideConstantWithLCT(pcAddress, LoadValue);
+    }
+    else if(choice==4){
+        //printf("Hello World\n");
+        strideLearnNoLCT(pcAddress, LoadValue);
+    }
+    else if(choice==5){
+        strideLearnWithLCT(pcAddress, LoadValue);
+    }
+    else if (choice == 6) { // pc+mem address
         pcWithMemAddress(pc, mem, LoadValue);
     }
-
-
+    else if (choice == 7) { // pc+mem address
+        fcmWithMaxOccurence(pcAddress, LoadValue);
+    }
+    else if(choice == 8){
+        tournamentPredictor(pcAddress, LoadValue);
+    }
 
    // Currently, this simple branch predictor simulator simply takes 
     // the previous observed branch direction as the next prediction.
@@ -90,33 +115,47 @@ void Predictor::lastValue(unsigned long int pcAddress, unsigned long int LoadVal
 
 void Predictor::lastValueWithLCT(unsigned long int pcAddress, unsigned long int LoadValue)
 {
-    if(LCT[pcAddress][historyBits] == 1)
-        this->total+=1;
+    
+    bool expected = false;
 
-
-    if(LVPT[pcAddress][historyBits]!=LoadValue){
-        LVPT[pcAddress][historyBits]=LoadValue;
-        LCT[pcAddress][historyBits] = 0;
+    if(LVPT[pcAddress][0] != LoadValue){
+        LVPT[pcAddress][0] = LoadValue;
     }
     else{
-        if(LCT[pcAddress][historyBits] == 1)
-            this->correct+=1;
-
-        LCT[pcAddress][historyBits]=1;
+        expected = true;
     }
 
+    if(this->n==2){
+        if(LCT[pcAddress][0] == 2 || LCT[pcAddress][0] == 3) {
+            this->total++;
+            if(expected){
+                this->correct++;
+            }
+        }   
+    }
+    else{
+        if(LCT[pcAddress][0] == 1){
+            this->total++;
+            if(expected){
+                this->correct++;
+            }
+        }
+    }
+    updateLCT(pcAddress, expected);
     
 }
+
 
 void Predictor::fcmWithMaxOccurence(unsigned long int pcAddress, unsigned long int LoadValue){
     
 
     //predict max occur
+    unsigned int m = historyBits;
+
     unsigned long int max = LRUCount[pcAddress][0];
     unsigned long int maxIndex = 0;
     unsigned long int min = LRUCount[pcAddress][0];
     unsigned long int minIndex = 0;
-
     for(unsigned long int j=1;j< m;j++){
         if(LRUCount[pcAddress][j] > max){
             max = LRUCount[pcAddress][j];
@@ -134,12 +173,23 @@ void Predictor::fcmWithMaxOccurence(unsigned long int pcAddress, unsigned long i
     bool expected = false;
     if(predictedValue == LoadValue) expected = true;
 
-    if(LCT[pcAddress][0] == 2 || LCT[pcAddress][1] == 3) {
-        this->total++;
-        if(expected){
-            this->correct++;
+    if(this->n==2){
+        if(LCT[pcAddress][0] == 2 || LCT[pcAddress][0] == 3) {
+            this->total++;
+            if(expected){
+                this->correct++;
+            }
+        }   
+    }
+    else{
+        if(LCT[pcAddress][0] == 1){
+            this->total++;
+            if(expected){
+                this->correct++;
+            }
         }
     }
+    
 
     updateLCT(pcAddress, expected);
     bool found = false;
@@ -159,12 +209,19 @@ void Predictor::fcmWithMaxOccurence(unsigned long int pcAddress, unsigned long i
 }
 
 void Predictor::updateLCT(unsigned long int address, bool expected){
-    if((this->LCT[address][0]==0) && (expected==true)) this->LCT[address][0]=1;
-    else if((this->LCT[address][0]==3) && (expected==false)) this->LCT[address][0]=2;
-    else if((this->LCT[address][0]==1) || (this->LCT[address][0]==2)){
-        if(expected==false) this->LCT[address][0]=0;
-        else this->LCT[address][0]=3;
-    }    
+    if(this->n == 2){
+        if((this->LCT[address][0]==0) && (expected==true)) this->LCT[address][0]=1;
+        else if((this->LCT[address][0]==3) && (expected==false)) this->LCT[address][0]=2;
+        else if((this->LCT[address][0]==1) || (this->LCT[address][0]==2)){
+            if(expected==false) this->LCT[address][0]=0;
+            else this->LCT[address][0]=3;
+        }       
+    }
+    else{
+        if(expected) this->LCT[address][0] = 1;
+        else this->LCT[address][0] = 0;
+    }
+    
 }
 
 
@@ -176,7 +233,8 @@ void Predictor::pcWithMemAddress(string pc, string mem, unsigned long int LoadVa
     unsigned long int indexAddress = truncateAddress(hexToInt(index));
     // cout << indexAddress << endl;
 
-    if (this->historyBits == 1) {
+
+    if (this->n == 2) {
         if (LCT[indexAddress][0] == 2 || LCT[indexAddress][0] == 3) {
             this->total++;
         }
@@ -223,82 +281,189 @@ void Predictor::pcWithMemAddress(string pc, string mem, unsigned long int LoadVa
         }
     }
 }
-/*
-bool Predictor::makePrediction(string input, bool expected){
-    // Convert Hex address to integer address
-    unsigned int address = truncateAddress(hexToInt(input));
 
-    // Currently, this simple branch predictor simulator simply takes 
-    // the previous observed branch direction as the next prediction.
-    // Predict branch based on last observed branch
-    //bool predicted = globalHistory & 1; 
-    int BHT_entry= BHT[address][globalHistory];
-    bool predicted;
-    BHTEntryCount[address][globalHistory]+=1;
-    if(n==1){
-        predicted=BHT_entry;
+void Predictor::strideConstantNoLCT(unsigned long int pcAddress, unsigned long int LoadValue)
+{
+    unsigned long int predicted = LVPT[pcAddress][0] + this->stride;
+    if(predicted!=LoadValue){
+        this->stride = LoadValue - LVPT[pcAddress][0];
     }
     else{
-        switch(BHT_entry){
-            case 0:
-            case 1:
-                predicted=0;
-                break;
-            case 2:
-            default:
-                predicted=1;
-                break;
-        }
+        this->correct+=1;
     }
-    //update BHT
-    if(n==1){
-        BHT[address][globalHistory]=int(expected);
+    LVPT[pcAddress][0]=LoadValue;
+    this->total+=1;
+}
+
+
+void Predictor::strideConstantWithLCT(unsigned long int pcAddress, unsigned long int LoadValue)
+{
+    bool expected = false;
+    
+    unsigned long int predicted = LVPT[pcAddress][0] + this->stride;
+
+    if(predicted!=LoadValue){
+        this->stride = LoadValue - LVPT[pcAddress][0];
     }
-    if(n==2){
-        if(expected){
-            switch(BHT_entry)
-            {
-                case 0:
-                   BHT[address][globalHistory]=1;
-                   break; 
-                case 1:
-                   BHT[address][globalHistory]=3;
-                   break;   
-                case 2:
-                     BHT[address][globalHistory]=3;
-                     break; 
+    else{
+        expected = true;
+    }
+
+
+    LVPT[pcAddress][0]=LoadValue;  
+
+    if(this->n==2){
+        if(LCT[pcAddress][0] == 2 || LCT[pcAddress][0] == 3) {
+            this->total++;
+            if(expected){
+                this->correct++;
+            }
+        }   
+    }
+    else{
+        if(LCT[pcAddress][0] == 1){
+            this->total++;
+            if(expected){
+                this->correct++;
             }
         }
+    }
+    updateLCT(pcAddress, expected); 
+}
+
+
+void Predictor::strideLearnNoLCT(unsigned long int pcAddress, unsigned long int LoadValue)
+{
+    unsigned long int strideNew = (unsigned long int) (this->a * this->stride + this->c);
+    unsigned long int predicted = LVPT[pcAddress][historyBits] + strideNew;
+    if(predicted!=LoadValue){
+        strideNew = LoadValue - LVPT[pcAddress][historyBits];
+        if(this->stride != this->strideOld){
+            this->a = (strideNew - this->stride) / (this->stride - this->strideOld);
+            this->c = strideNew - a * this->stride;
+        }
         else{
-          switch(BHT_entry)
-            {
-                case 1:
-                   BHT[address][globalHistory]=0;
-                   break;   
-                case 2:
-                     BHT[address][globalHistory]=0;
-                     break; 
-                case 3:
-                    BHT[address][globalHistory]=2;
-                    break; 
-            }  
+            this->a =1;
+            this->c =0;
+        }
+        this->strideOld = this->stride;
+        this->stride = strideNew;     
+    }
+    else{
+        this->correct+=1;
+        
+    }
+    LVPT[pcAddress][historyBits]=LoadValue;
+    this->total+=1;
+}
+
+void Predictor::strideLearnWithLCT(unsigned long int pcAddress, unsigned long int LoadValue)
+{
+    bool expected = false; 
+
+    unsigned long int strideNew = (unsigned long int) (this->a * this->stride + this->c);
+    unsigned long int predicted = LVPT[pcAddress][0] + strideNew;
+    if(predicted!=LoadValue){
+        strideNew = LoadValue - LVPT[pcAddress][0];
+        if(this->stride != this->strideOld){
+            this->a = (strideNew - this->stride) / (this->stride - this->strideOld);
+            this->c = strideNew - a * this->stride;
+        }
+        else{
+            this->a =1;
+            this->c =0;
+        }
+        this->strideOld = this->stride;
+        this->stride = strideNew;     
+    }
+    else{
+        expected = true;
+    }
+    LVPT[pcAddress][0]=LoadValue;
+
+    if(this->n==2){
+        if(LCT[pcAddress][0] == 2 || LCT[pcAddress][0] == 3) {
+            this->total++;
+            if(expected){
+                this->correct++;
+            }
+        }   
+    }
+    else{
+        if(LCT[pcAddress][0] == 1){
+            this->total++;
+            if(expected){
+                this->correct++;
+            }
         }
     }
-    // Update global history 
-    if(historyBits!=0){
-        updateGlobalHistory(expected);
-    }
-    
-
-    // Update statistics
-    if(predicted == expected){
-        this->correct++;
-    }
-    this->total++;
-
-    return predicted;
+    updateLCT(pcAddress, expected); 
 }
-*/
+
+void Predictor::tournamentPredictor(unsigned long int pcAddress, unsigned long int LoadValue){
+    //predictor 1: LastInstanceWithoutLCT, predictor 2: LinearLCTwithStride
+    //first get predicted value from predictor-1
+
+    unsigned long int predicted2 = LVPT[pcAddress][0];
+
+    unsigned long int strideNew = (unsigned long int) (this->a * this->stride + this->c);
+    unsigned long int predicted1 = LVPT[pcAddress][0] + strideNew;
+
+    if(tournament == 0){
+        strideLearnNoLCT(pcAddress, LoadValue);
+        if(predicted1!=LoadValue)   tournament=1;
+    }
+    else if(tournament == 3){
+        lastValue(pcAddress, LoadValue);
+
+        if(predicted1!=LoadValue){
+            strideNew = LoadValue - LVPT[pcAddress][0];
+            if(this->stride != this->strideOld){
+                this->a = (strideNew - this->stride) / (this->stride - this->strideOld);
+                this->c = strideNew - a * this->stride;
+            }
+            else{
+                this->a =1;
+                this->c =0;
+            }
+            this->strideOld = this->stride;
+            this->stride = strideNew;     
+
+        }
+        
+        if(predicted2!=LoadValue)   tournament=2;
+    }
+    else if(tournament == 1){
+        strideLearnNoLCT(pcAddress, LoadValue);
+
+        if(predicted1!=LoadValue)   tournament=2;
+        else    tournament = 0;
+    }
+    else{
+        lastValue(pcAddress, LoadValue);
+
+        if(predicted1!=LoadValue){
+            strideNew = LoadValue - LVPT[pcAddress][0];
+            if(this->stride != this->strideOld){
+                this->a = (strideNew - this->stride) / (this->stride - this->strideOld);
+                this->c = strideNew - a * this->stride;
+            }
+            else{
+                this->a =1;
+                this->c =0;
+            }
+            this->strideOld = this->stride;
+            this->stride = strideNew;     
+
+        }
+
+        if(predicted2!=LoadValue)   tournament=1;
+        else    tournament=3;
+    }
+
+
+}
+
 /*
  * Print out branch predictor statistics
  */
@@ -309,10 +474,15 @@ void Predictor::printStats(){
     }
     else{
         printf("Misclassification rate: %.2f%%\n", 100.00 * (1 - (double)(this->correct)/this->total));
+        printf("correct: %d\n", this->correct);
+        printf("Predicted: %d\n",this->total);
+        
+        printf("Correct percentage: %.2f%%\n", 100.00 * ((double) this->correct/this->total));
+        printf("Predicted percentage: %.2f%%\n", 100.00 * ( (double) this->total/this->fileLength));
+        //printf("Hi\n");
     } 
     
-    printf("correct: %d\n", this->correct);
-    printf("total: %d\n",this->total);
+
 
 }
 
@@ -340,4 +510,3 @@ unsigned long int Predictor::truncateAddress(unsigned long int input){
 
     return result;
 }
-
