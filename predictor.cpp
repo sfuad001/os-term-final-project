@@ -37,7 +37,7 @@ Predictor::Predictor(unsigned int m, unsigned int n, unsigned int addrLength, bo
 
     printf("Address length: %u\n", this->addrBits);
     printf("Saturating counter: %u bit(s)\n", this->n);
-    printf("Stride: %u\n", this->stride);
+    printf("Stride: %lu\n", this->stride);
     printf("Local history instances: %u\n", this->historyBits);
     printf("Debug mode: %u\n", this->debug);
 };
